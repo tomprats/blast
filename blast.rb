@@ -54,7 +54,7 @@ class Blast < Hasu::Window
     end
     if @enemies.length.zero?
       @level += 1
-      reset_level
+      reset_enemies
     end
 
     if button_down?(Gosu::KbLeft)
