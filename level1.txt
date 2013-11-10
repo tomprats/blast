@@ -1,0 +1,17 @@
+# Must be no greater than
+# the followoing box:
+################
+#  __________  #
+#  ____  ____  #
+#      ||      #
+#      ||      #
+#      ||      #
+#              #
+################
+
+  x x x x x x x
+ x x x x x x x
+  x x x x x x x
+ x x x x x x x
+  x x x x x x x
+ x x x x x x x
