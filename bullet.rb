@@ -4,9 +4,10 @@ class Bullet
   SPEED = 12
 
   attr_reader :x, :y
-  def initialize(x, y)
+  def initialize(x, y, enemy=false)
     @x = x - WIDTH/2
     @y = y - HEIGHT/2
+    @enemy = enemy
   end
 
   def x1
@@ -25,8 +26,16 @@ class Bullet
     @y + HEIGHT
   end
 
+  def enemy?
+    @enemy
+  end
+
   def draw(window)
-    color = Gosu::Color::RED
+    if enemy?
+      color = Gosu::Color::RED
+    else
+      color = Gosu::Color::YELLOW
+    end
 
     window.draw_quad(
       x1, y1, color,
@@ -37,10 +46,17 @@ class Bullet
   end
 
   def update!
-    @y -= SPEED
+    if enemy?
+      @y += SPEED/2
 
-    # Return if it is out of the window
-    @y <= HEIGHT
+      # Return if it is out of the window
+      @y <= 0
+    else
+      @y -= SPEED
+
+      # Return if it is out of the window
+      @y <= HEIGHT
+    end
   end
 
   def intersects?(object)

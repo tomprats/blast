@@ -6,6 +6,18 @@ class Enemy
   def initialize(x, y)
     @x = x
     @y = y
+    @step = 0
+    @fire = false
+    @fire_time = rand(300)
+    @bottom = false
+  end
+
+  def x_middle
+    @x + SIZE/2
+  end
+
+  def y_middle
+    @y + SIZE/2
   end
 
   def x1
@@ -24,6 +36,15 @@ class Enemy
     @y + SIZE
   end
 
+  def fire?
+    if @fire
+      @fire = false
+      true
+    else
+      false
+    end
+  end
+
   def draw(window)
     color = Gosu::Color::BLUE
 
@@ -35,27 +56,56 @@ class Enemy
     )
   end
 
+  def update!(ai = 1)
+    case ai
+    when 1
+      levelOne
+    else
+      levelOne
+    end
+    @step += 1
+  end
+
+  def levelOne
+    case @step % 100
+    when 0..10, 90..100
+      right!
+    when 10..30
+      left!
+    when 50..70
+      up!
+    when 30..50, 70..90
+      down!
+    end
+    @step = -1 if @step > 299
+    fire!
+  end
+
+  def won?
+    @bottom
+  end
+
+  def fire!
+    if @step == @fire_time
+      @fire = true
+    end
+  end
+
   def left!
     @x -= SPEED
-
-    @x = 0 if @x < 0
   end
 
   def right!
     @x += SPEED
-
-    @x = Blast::WIDTH - SIZE if @x > Blast::WIDTH - SIZE
   end
 
   def up!
     @y -= SPEED
-
-    @y = Blast::HEIGHT - LIMIT if @y < Blast::HEIGHT - LIMIT
   end
 
   def down!
     @y += SPEED
 
-    @y = Blast::HEIGHT - SIZE if @y > Blast::HEIGHT - SIZE
+    @bottom = true if @y > Blast::HEIGHT - SIZE
   end
 end
