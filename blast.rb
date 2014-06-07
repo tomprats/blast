@@ -54,12 +54,12 @@ class Blast < Hasu::Window
     elsif won?
       text = "YOU WON"
       @font.draw(text, WIDTH/2 - @font.text_width(text)/2, HEIGHT/2 + 100, 0)
-      text = "Press P to Restart"
+      text = "Press P to Continue"
       @font.draw(text, WIDTH/2 - @font.text_width(text)/2, HEIGHT/2 + 140, 0)
     elsif lost?
       text = "YOU LOST"
       @font.draw(text, WIDTH/2 - @font.text_width(text)/2, HEIGHT/2 + 100, 0)
-      text = "Press P to Restart"
+      text = "Press P to Continue"
       @font.draw(text, WIDTH/2 - @font.text_width(text)/2, HEIGHT/2 + 140, 0)
     elsif paused?
       text = "PAUSED"
@@ -152,12 +152,14 @@ class Blast < Hasu::Window
     @level += 1
     @wins += 1
     reset_enemies
+    @player.reset!
   end
   def lose!
     @state = "lost"
     @dead = false
     @losses += 1
     reset_enemies
+    @player.reset!
   end
 
   def paused?

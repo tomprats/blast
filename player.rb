@@ -5,6 +5,10 @@ class Player
 
   attr_reader :x, :y
   def initialize
+    reset!
+  end
+
+  def reset!
     @x = Blast::WIDTH/2 - SIZE/2
     @y = Blast::HEIGHT - SIZE
   end
