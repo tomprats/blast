@@ -4,10 +4,10 @@ class Bullet
   SPEED = 12
 
   attr_reader :x, :y
-  def initialize(x, y, enemy=false)
+  def initialize(x, y, options={})
     @x = x - WIDTH/2
     @y = y - HEIGHT/2
-    @enemy = enemy
+    @enemy = options[:enemy]
   end
 
   def x1

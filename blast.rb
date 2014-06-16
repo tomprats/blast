@@ -3,6 +3,7 @@ require "hasu"
 
 Hasu.load "player.rb"
 Hasu.load "bullet.rb"
+Hasu.load "powerup.rb"
 Hasu.load "enemy.rb"
 
 class Blast < Hasu::Window
@@ -10,6 +11,7 @@ class Blast < Hasu::Window
   HEIGHT = 600
   DELAY = 0.25
   PAUSE_DELAY = 0.5
+  POWERUP_CHANCE = 0.5
 
   def initialize
     super(WIDTH, HEIGHT, false)
@@ -19,25 +21,23 @@ class Blast < Hasu::Window
     @player = Player.new
     @score = 0
     @level = 1
-    @bullets = []
-    @enemies = []
-    @enemy_bullets = []
-    @last_shot = Time.now - DELAY
-    @last_pause = Time.now - PAUSE_DELAY
     @dead = false
     @state = "start"
     @wins = 0
     @losses = 0
 
-    reset_enemies
+    reset_level
 
     @font = Gosu::Font.new(self, "Arial", 30)
   end
 
   def draw
-    @player.draw(self)
+    @player.draw(self, @powerup)
     @bullets.each do |bullet|
       bullet.draw(self)
+    end
+    @powerups.each do |powerup|
+      powerup.draw(self)
     end
     @enemies.each do |enemy|
       enemy.draw(self)
@@ -47,6 +47,9 @@ class Blast < Hasu::Window
     end
 
     @font.draw("Wins: #{@wins}        Losses: #{@losses}", 20, 10, 0)
+    if @powerup
+      @font.draw("Powerup: #{@powerup.type}", WIDTH/2, 10, 0)
+    end
     @font.draw("Score: #{@score}", WIDTH-120, 10, 0)
     if !started?
       text = "Press P to Start"
@@ -74,8 +77,20 @@ class Blast < Hasu::Window
       @bullets.each do |bullet|
         @bullets.delete(bullet) if bullet.update!
       end
+      @powerup = nil if @powerup && @powerup.done?
+      @powerups.each do |powerup|
+        @powerups.delete(powerup) if powerup.update!
+        if powerup.intersects?(@player)
+          @powerups.delete(powerup)
+          @powerup = powerup
+        end
+      end
       @enemy_bullets.each do |bullet|
         @enemy_bullets.delete(bullet) if bullet.update!
+        if bullet.intersects?(@player)
+          @enemy_bullets.delete(bullet)
+          @dead = true unless @powerup && @powerup.invincible?
+        end
       end
       @enemies.each do |enemy|
         enemy.update!
@@ -83,31 +98,21 @@ class Blast < Hasu::Window
         enemy_fire!(enemy) if enemy.fire?
         @bullets.each do |bullet|
           if bullet.intersects?(enemy)
+            @powerups.push(Powerup.setup(bullet.x, bullet.y)) if rand(1/POWERUP_CHANCE).zero?
             @enemies.delete(enemy)
             @bullets.delete(bullet)
             @score += 1
           end
         end
       end
-      @enemy_bullets.each do |bullet|
-        if bullet.intersects?(@player)
-          @enemy_bullets.delete(bullet)
-          @dead = true
-        end
-      end
 
-      if button_down?(Gosu::KbLeft)
-        @player.left!
-      end
-      if button_down?(Gosu::KbRight)
-        @player.right!
-      end
-      if button_down?(Gosu::KbUp)
-        @player.up!
-      end
-      if button_down?(Gosu::KbDown)
-        @player.down!
-      end
+      @player.update(
+        left: button_down?(Gosu::KbLeft),
+        right: button_down?(Gosu::KbRight),
+        up: button_down?(Gosu::KbUp),
+        down: button_down?(Gosu::KbDown)
+      )
+
       if button_down?(Gosu::KbSpace)
         shoot!
       end
@@ -151,15 +156,13 @@ class Blast < Hasu::Window
     @state = "won"
     @level += 1
     @wins += 1
-    reset_enemies
-    @player.reset!
+    reset_level
   end
   def lose!
     @state = "lost"
     @dead = false
     @losses += 1
-    reset_enemies
-    @player.reset!
+    reset_level
   end
 
   def paused?
@@ -179,20 +182,27 @@ class Blast < Hasu::Window
   end
 
   def enemy_fire!(enemy)
-    @enemy_bullets.push(Bullet.new(enemy.x_middle, enemy.y, true))
+    @enemy_bullets.push(Bullet.new(enemy.x_middle, enemy.y, enemy: true))
   end
 
   def shoot!
-    if(@last_shot < Time.now - DELAY)
+    delay = @powerup && @powerup.rapid_fire? ? DELAY/2 : DELAY
+    if(@last_shot < Time.now - delay)
       @bullets.push(Bullet.new(@player.x_middle, @player.y))
       @last_shot = Time.now
     end
   end
 
-  def reset_enemies
+  def reset_level
+    @player.reset!
     @bullets = []
-    @enemy_bullets = []
+    @powerup = nil
+    @powerups = []
     @enemies = []
+    @enemy_bullets = []
+    @last_shot = Time.now - DELAY
+    @last_pause = Time.now - PAUSE_DELAY
+
     case @level
     when 1
       enemy_file = File.open("level1.txt", "r")

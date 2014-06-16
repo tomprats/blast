@@ -2,6 +2,7 @@ class Player
   SIZE = 32
   SPEED = 6
   LIMIT = 200
+  COLOR = Gosu::Color::WHITE
 
   attr_reader :x, :y
   def initialize
@@ -37,15 +38,30 @@ class Player
     @y + SIZE
   end
 
-  def draw(window)
-    color = Gosu::Color::WHITE
-
+  def draw(window, powerup)
     window.draw_quad(
-      x1, y1, color,
-      x1, y2, color,
-      x2, y2, color,
-      x2, y1, color,
+      x1, y1, COLOR,
+      x1, y2, COLOR,
+      x2, y2, COLOR,
+      x2, y1, COLOR,
     )
+
+    if powerup
+      color = powerup.color
+      window.draw_quad(
+        x1+5, y1+5, color,
+        x1+5, y2-5, color,
+        x2-5, y2-5, color,
+        x2-5, y1+5, color,
+      )
+    end
+  end
+
+  def update(options={})
+    left! if options[:left]
+    right! if options[:right]
+    up! if options[:up]
+    down! if options[:down]
   end
 
   def left!
